@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DermDose — Pediatric &amp; Adult Dermatology Drug Dosing</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: #fff !important; }
+    }
+    .print-only { display: none; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen antialiased">
+  <!-- Top Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-sm">
+          <i data-lucide="stethoscope" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 leading-tight">DermDose</h1>
+          <p class="text-xs text-slate-500">Pediatric &amp; Adult Dermatology Dosing Reference (31 Drugs)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btn-rx-drawer" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          <i data-lucide="clipboard-list" class="w-4 h-4 text-teal-600"></i>
+          <span>Rx Tray</span>
+          <span id="rx-count-badge" class="ml-0.5 px-1.5 py-0.5 rounded-full bg-teal-600 text-white text-[10px] font-semibold">0</span>
+        </button>
+        <button id="btn-print-page" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 hover:bg-teal-700 text-white transition shadow-sm">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Print</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-6">
+    <!-- Dose Calculator Section -->
+    <section id="calculator-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden no-print">
+      <div class="px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-teal-50/70 to-slate-50 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="calculator" class="w-4 h-4 text-teal-700"></i>
+          <h2 class="text-sm font-semibold text-slate-900">Instant Drug Dose Calculator</h2>
+        </div>
+        <span class="text-xs text-slate-500">Enter drug name + age (pediatric or adult) &amp; optional measured weight</span>
+      </div>
+
+      <div class="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Left Inputs -->
+        <div class="lg:col-span-5 space-y-4">
+          <!-- Drug Search / Select -->
+          <div>
+            <label for="drug-search-input" class="block text-xs font-medium text-slate-700 mb-1">Drug Name</label>
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none"></i>
+              <input id="drug-search-input" type="text" placeholder="Search (e.g. Tofacitinib, Dapsone, Ceftriaxone, MTX)..." autocomplete="off"
+                class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
+            </div>
+            <select id="drug-select" class="mt-2 w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </select>
+          </div>
+
+          <!-- Age + Weight Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="age-input" class="block text-xs font-medium text-slate-700 mb-1">Patient Age</label>
+              <div class="flex rounded-xl border border-slate-300 overflow-hidden focus-within:ring-2 focus-within:ring-teal-500">
+                <input id="age-input" type="number" min="0" max="110" step="0.5" value="28"
+                  class="w-full px-3 py-2 text-sm focus:outline-none" />
+                <select id="age-unit" class="bg-slate-50 border-l border-slate-200 px-2.5 py-2 text-xs font-medium text-slate-700 focus:outline-none">
+                  <option value="years" selected>yrs</option>
+                  <option value="months">mo</option>
+                </select>
+              </div>
+              <div id="age-presets" class="mt-1.5 flex flex-wrap gap-1">
+                <button type="button" data-val="6" data-unit="months" class="age-preset px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 hover:bg-teal-100 text-slate-700">6m</button>
+                <button type="button" data-val="2" data-unit="years" class="age-preset px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 hover:bg-teal-100 text-slate-700">2y</button>
+                <button type="button" data-val="5" data-unit="years" class="age-preset px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 hover:bg-teal-100 text-slate-700">5y</button>
+                <button type="button" data-val="10" data-unit="years" class="age-preset px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 hover:bg-teal-100 text-slate-700">10y</button>
+                <button type="button" data-val="14" data-unit="years" class="age-preset px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 hover:bg-teal-100 text-slate-700">14y</button>
+                <button type="button" data-val="28" data-unit="years" class="age-preset px-2 py-0.5 rounded-md text-[11px] font-medium bg-teal-50 border border-teal-200 hover:bg-teal-100 text-teal-800">Adult</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label for="weight-input" class="text-xs font-medium text-slate-700">Weight (kg)</label>
+                <label class="inline-flex items-center gap-1 text-[11px] text-teal-700 cursor-pointer select-none">
+                  <input id="auto-weight-toggle" type="checkbox" checked class="rounded text-teal-600 focus:ring-teal-500" />
+                  <span>Auto from age</span>
+                </label>
+              </div>
+              <input id="weight-input" type="number" min="1" max="180" step="0.5" value="60"
+                class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+              <p id="weight-source-note" class="mt-1 text-[11px] text-slate-500">Estimated adult standard (60 kg)</p>
+            </div>
+          </div>
+
+          <!-- Formulation & Regimen -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="formulation-select" class="block text-xs font-medium text-slate-700 mb-1">Formulation / Strength</label>
+              <select id="formulation-select" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+              </select>
+            </div>
+            <div>
+              <label for="indication-select" class="block text-xs font-medium text-slate-700 mb-1">Indication / Regimen</label>
+              <select id="indication-select" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Result Card -->
+        <div class="lg:col-span-7 flex flex-col justify-between bg-slate-50 rounded-2xl border border-slate-200 p-5">
+          <div id="result-card-body" class="space-y-4">
+            <!-- Populated by JS -->
+          </div>
+          <div class="pt-4 mt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <a id="result-source-link" href="#" target="_blank" rel="noopener noreferrer"
+              class="inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-800 hover:underline">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Verify Clinical Source</span>
+            </a>
+            <div class="flex items-center gap-2">
+              <button id="btn-copy-dose" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>Copy Dose</span>
+              </button>
+              <button id="btn-add-rx" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-teal-600 hover:bg-teal-700 text-white transition shadow-sm">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add to Rx Tray</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Complete Reference Table Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 no-print">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-900">Complete Dermatology Age &amp; Weight Dosing Table</h2>
+          <p class="text-xs text-slate-500">Click any drug row to load it into the calculator above</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none"></i>
+            <input id="table-search" type="text" placeholder="Filter table by drug, class, or condition..."
+              class="pl-8 pr-3 py-1.5 text-xs w-64 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Class Filter Pills -->
+      <div id="class-filters" class="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-1.5 no-print">
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              <th class="py-3 px-4">Drug &amp; Class</th>
+              <th class="py-3 px-4">Age / Weight Basis</th>
+              <th class="py-3 px-4">Standard Dose &amp; Frequency</th>
+              <th class="py-3 px-4">Max Cap / Clinical Notes</th>
+              <th class="py-3 px-4 text-right no-print">Source</th>
+            </tr>
+          </thead>
+          <tbody id="dosing-table-body" class="divide-y divide-slate-100 text-xs sm:text-sm">
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Printable Rx Summary (visible in print & drawer) -->
+    <section id="print-rx-summary" class="print-only border border-slate-300 rounded-xl p-5 mt-4">
+      <h2 class="text-base font-bold text-slate-900 mb-2">Patient Dose Summary</h2>
+      <p id="print-patient-meta" class="text-xs text-slate-600 mb-3"></p>
+      <div id="print-rx-list" class="space-y-2 text-sm"></div>
+    </section>
+  </main>
+
+  <!-- Rx Tray Slide-Over Drawer -->
+  <div id="rx-drawer-backdrop" class="fixed inset-0 bg-slate-900/40 z-40 hidden no-print"></div>
+  <aside id="rx-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-200 flex flex-col no-print">
+    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i data-lucide="clipboard-list" class="w-5 h-5 text-teal-600"></i>
+        <h3 class="text-sm font-semibold text-slate-900">Patient Rx Dose Tray</h3>
+      </div>
+      <button id="btn-close-drawer" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div id="rx-tray-items" class="flex-1 overflow-y-auto p-5 space-y-3">
+      <!-- Populated by JS -->
+    </div>
+    <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+      <button id="btn-clear-rx" type="button" class="px-3 py-2 rounded-lg text-xs font-medium text-rose-600 hover:bg-rose-50 transition">Clear All</button>
+      <div class="flex items-center gap-2">
+        <button id="btn-copy-rx" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-white border border-slate-300 hover:bg-slate-100 text-slate-700">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>Copy Summary</span>
+        </button>
+        <button id="btn-print-rx" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-teal-600 hover:bg-teal-700 text-white">
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+          <span>Print Rx</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 no-print"></div>
+
+  <script>
+    // WHO / IAP Median Weight-for-Age Reference Points (months -> kg)
+    const WEIGHT_BY_MONTHS = [
+      [0, 3.3], [3, 6.0], [6, 7.5], [9, 8.6], [12, 9.5], [18, 10.5],
+      [24, 12.0], [36, 14.5], [48, 16.5], [60, 18.5], [72, 20.5],
+      [84, 23.0], [96, 26.0], [108, 29.0], [120, 32.0], [144, 40.0],
+      [168, 50.0], [192, 56.0], [216, 60.0]
+    ];
+
+    function estimateWeightKg(ageMonths) {
+      if (ageMonths <= 0) return 3.3;
+      if (ageMonths >= 216) return 60;
+      for (let i = 0; i < WEIGHT_BY_MONTHS.length - 1; i++) {
+        const [m1, w1] = WEIGHT_BY_MONTHS[i];
+        const [m2, w2] = WEIGHT_BY_MONTHS[i + 1];
+        if (ageMonths >= m1 && ageMonths <= m2) {
+          const ratio = (ageMonths - m1) / (m2 - m1);
+          return Math.round((w1 + ratio * (w2 - w1)) * 10) / 10;
+        }
+      }
+      return 60;
+    }
+
+    const DRUGS = [
+      // 1. ANTIHISTAMINES
+      {
+        id: 'cetirizine',
+        name: 'Cetirizine',
+        class: 'Antihistamines',
+        basisSummary: '6–12 mo, 12–23 mo, 2–5 yrs, ≥6 yrs & Adult; or 0.25 mg/kg/dose',
+        doseSummary: '2.5 mg OD (6–12 mo); 2.5 mg OD–BID (12–23 mo); 2.5 mg BID (2–5 yrs); 5–10 mg OD (≥6 yrs/Adult)',
+        notesSummary: 'Max 10 mg/day. Adjust in renal impairment.',
+        sourceLabel: 'IWK Pediatric Guidelines',
+        sourceUrl: 'https://www.dir.iwk.nshealth.ca/Home/DDGDetails/193cd7c4-f2a7-e911-80f3-005056b200d2?PatientPopulation=Ped',
+        formulations: [
+          { label: 'Tablet 10 mg', type: 'tablet', mgPerTab: 10 },
+          { label: 'Syrup 5 mg / 5 mL (1 mg/mL)', type: 'liquid', mgPerMl: 1 }
+        ],
+        indications: [
+          { id: 'standard', label: 'Urticaria / Allergic Pruritus (Age-based)' },
+          { id: 'weight', label: 'Weight-based (0.25 mg/kg/dose)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (ageMo < 6) return { eligible: false, alert: 'Not routinely recommended under 6 months; consult pediatric specialist.', doseMg: 0, freq: '—', duration: '—' };
+          if (indId === 'weight') {
+            const raw = wt * 0.25;
+            const capped = Math.min(raw, 10);
+            return { eligible: true, doseMg: roundDose(capped), freq: 'Once or twice daily', maxCap: '10 mg/dose', isCapped: raw > 10, duration: 'As needed' };
+          }
+          if (ageMo < 12) return { eligible: true, doseMg: 2.5, freq: 'Once daily', maxCap: '2.5 mg/day', duration: 'As needed' };
+          if (ageMo < 24) return { eligible: true, doseMg: 2.5, freq: 'Once to twice daily', maxCap: '5 mg/day', duration: 'As needed' };
+          if (ageMo < 72) return { eligible: true, doseMg: 2.5, freq: 'Twice daily (or 5 mg OD)', maxCap: '5 mg/day', duration: 'As needed' };
+          return { eligible: true, doseMg: 10, freq: 'Once daily (5–10 mg)', maxCap: '10 mg/day', duration: 'As needed' };
+        }
+      },
+      {
+        id: 'levocetirizine',
+        name: 'Levocetirizine',
+        class: 'Antihistamines',
+        basisSummary: '6 mo–5 yrs, 6–11 yrs, ≥12 yrs & Adult',
+        doseSummary: '1.25 mg OD (6 mo–5 yrs); 2.5 mg OD (6–11 yrs); 5 mg OD (≥12 yrs/Adult)',
+        notesSummary: 'Give in evening; do not exceed age max.',
+        sourceLabel: 'FDA Label',
+        sourceUrl: 'https://www.accessdata.fda.gov/drugsatfda_docs/label/2018/022064s036lbl.pdf',
+        formulations: [
+          { label: 'Tablet 5 mg', type: 'tablet', mgPerTab: 5 },
+          { label: 'Syrup 2.5 mg / 5 mL (0.5 mg/mL)', type: 'liquid', mgPerMl: 0.5 }
+        ],
+        indications: [{ id: 'standard', label: 'Chronic Urticaria / Pruritus' }],
+        calc: (ageMo) => {
+          if (ageMo < 6) return { eligible: false, alert: 'Safety not established under 6 months.', doseMg: 0, freq: '—', duration: '—' };
+          if (ageMo < 72) return { eligible: true, doseMg: 1.25, freq: 'Once daily in evening', maxCap: '1.25 mg/day', duration: 'As needed' };
+          if (ageMo < 144) return { eligible: true, doseMg: 2.5, freq: 'Once daily in evening', maxCap: '2.5 mg/day', duration: 'As needed' };
+          return { eligible: true, doseMg: 5, freq: 'Once daily in evening', maxCap: '5 mg/day', duration: 'As needed' };
+        }
+      },
+      {
+        id: 'fexofenadine',
+        name: 'Fexofenadine',
+        class: 'Antihistamines',
+        basisSummary: '2–11 yrs, ≥12 yrs & Adult',
+        doseSummary: '30 mg BID (2–11 yrs); 120–180 mg OD (≥12 yrs/Adult)',
+        notesSummary: 'Non-sedating; reduce to 30 mg OD if renal impairment (2–6 yrs).',
+        sourceLabel: 'Sanofi India PI',
+        sourceUrl: 'https://www.sanofi.com/assets/countries/india/docs/consumer-healthcare/for-healthcare-professionals/products-information/allegra-pi.pdf',
+        formulations: [
+          { label: 'Tablet 180 mg', type: 'tablet', mgPerTab: 180 },
+          { label: 'Tablet 120 mg', type: 'tablet', mgPerTab: 120 },
+          { label: 'Oral Suspension 30 mg / 5 mL (6 mg/mL)', type: 'liquid', mgPerMl: 6 }
+        ],
+        indications: [{ id: 'standard', label: 'Urticaria / Allergic Dermatitis' }],
+        calc: (ageMo) => {
+          if (ageMo < 24) return { eligible: false, alert: 'Not established for children under 2 years.', doseMg: 0, freq: '—', duration: '—' };
+          if (ageMo < 144) return { eligible: true, doseMg: 30, freq: 'Twice daily (every 12 hours)', maxCap: '60 mg/day', duration: 'As needed' };
+          return { eligible: true, doseMg: 180, freq: 'Once daily (120–180 mg)', maxCap: '180 mg/day', duration: 'As needed' };
+        }
+      },
+      {
+        id: 'hydroxyzine',
+        name: 'Hydroxyzine',
+        class: 'Antihistamines',
+        basisSummary: '≤40 kg (max 2 mg/kg/day); >40 kg & Adult',
+        doseSummary: '≤2 mg/kg/day div Q6–8H (≤40 kg); 25–100 mg/day div or 25 mg HS (Adult)',
+        notesSummary: 'Sedating; caution with QT-prolonging drugs.',
+        sourceLabel: 'Pediatric Oncall',
+        sourceUrl: 'https://www.pediatriconcall.com/drugs/hydroxyzine/653',
+        formulations: [
+          { label: 'Tablet 25 mg', type: 'tablet', mgPerTab: 25 },
+          { label: 'Tablet 10 mg', type: 'tablet', mgPerTab: 10 },
+          { label: 'Syrup 10 mg / 5 mL (2 mg/mL)', type: 'liquid', mgPerMl: 2 }
+        ],
+        indications: [{ id: 'pruritus', label: 'Pruritus / Nocturnal Itch' }],
+        calc: (ageMo, wt) => {
+          if (wt <= 40) {
+            const dailyMax = Math.min(wt * 2, 50);
+            const perDose = roundDose(dailyMax / 3);
+            return { eligible: true, doseMg: perDose, freq: '3 times daily (Q8H) or HS', maxCap: `${roundDose(wt * 2)} mg/day (2 mg/kg/day)`, isCapped: wt * 2 > 50, duration: 'Short-term PRN', alert: 'Monitor for sedation and QT prolongation risk.' };
+          }
+          return { eligible: true, doseMg: 25, freq: '25 mg HS or TID–QID (50–100 mg/day)', maxCap: '100 mg/day', duration: 'Short-term PRN', alert: 'Sedating; avoid driving/machinery.' };
+        }
+      },
+
+      // 2. ANTIFUNGALS
+      {
+        id: 'terbinafine',
+        name: 'Terbinafine',
+        class: 'Antifungals',
+        basisSummary: '10–20 kg, 20–40 kg, >40 kg & Adult',
+        doseSummary: '62.5 mg OD (10–20 kg); 125 mg OD (20–40 kg); 250 mg OD (>40 kg/Adult)',
+        notesSummary: '2–6 wks (tinea corporis/capitis); 6 wks (fingernail) / 12 wks (toenail).',
+        sourceLabel: 'PMC Tinea Capitis Review',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3047946/',
+        formulations: [
+          { label: 'Tablet 250 mg (scored)', type: 'tablet', mgPerTab: 250 },
+          { label: 'Tablet 125 mg', type: 'tablet', mgPerTab: 125 }
+        ],
+        indications: [{ id: 'tinea', label: 'Dermatophytosis / Tinea Capitis / Onychomycosis' }],
+        calc: (ageMo, wt) => {
+          let alert = ageMo < 24 ? 'Off-label under 2 years; verify LFTs if prolonged course.' : '';
+          if (wt < 10) return { eligible: true, doseMg: roundDose(wt * 4.5), freq: 'Once daily (4–5 mg/kg/day)', maxCap: '62.5 mg/day', duration: '2–4 weeks', alert: 'Weight <10 kg: off-label weight-based dosing; monitor closely.' };
+          if (wt <= 20) return { eligible: true, doseMg: 62.5, freq: 'Once daily', maxCap: '62.5 mg/day', duration: '2–4 wks (Trichophyton) / 8–12 wks (Microsporum)', alert };
+          if (wt <= 40) return { eligible: true, doseMg: 125, freq: 'Once daily', maxCap: '125 mg/day', duration: '2–4 wks (Trichophyton) / 8–12 wks (Microsporum)', alert };
+          return { eligible: true, doseMg: 250, freq: 'Once daily', maxCap: '250 mg/day', duration: '2–6 wks (skin) / 6–12 wks (nails)', alert };
+        }
+      },
+      {
+        id: 'itraconazole',
+        name: 'Itraconazole',
+        class: 'Antifungals',
+        basisSummary: 'Child (3–5 mg/kg/day); Adult (100–200 mg OD/BID)',
+        doseSummary: '3–5 mg/kg/day (Child); 100–200 mg OD–BID (Adult) or pulse 200 mg BID × 1 wk/mo',
+        notesSummary: 'Take capsules with food; check CYP3A4 interactions & LFTs.',
+        sourceLabel: 'PMC Tinea Capitis Review',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3047946/',
+        formulations: [
+          { label: 'Capsule 100 mg', type: 'tablet', mgPerTab: 100 },
+          { label: 'Capsule 200 mg', type: 'tablet', mgPerTab: 200 },
+          { label: 'Oral Solution 10 mg / mL', type: 'liquid', mgPerMl: 10 }
+        ],
+        indications: [
+          { id: 'capsules', label: 'Standard Daily (5 mg/kg/day; Adult 200 mg/day)' },
+          { id: 'solution', label: 'Oral Solution (3 mg/kg/day)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (ageMo >= 216 || wt >= 50) {
+            return { eligible: true, doseMg: 200, freq: 'Once daily (or 100 mg BID); 200 mg BID for onychomycosis pulse', maxCap: '400 mg/day', duration: '2–4 wks (skin) / 2–3 pulses (nails)', alert: 'Take capsules with food; check CYP3A4 interactions & LFTs.' };
+          }
+          const factor = indId === 'solution' ? 3 : 5;
+          const raw = wt * factor;
+          const capped = Math.min(raw, 200);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily (or divided BID if >100 mg)', maxCap: '200 mg/day', isCapped: raw > 200, duration: '2–6 weeks', alert: 'Take capsules with food; check CYP3A4 interactions & LFTs.' };
+        }
+      },
+      {
+        id: 'fluconazole',
+        name: 'Fluconazole',
+        class: 'Antifungals',
+        basisSummary: 'Child (3–6 mg/kg/day or 8 mg/kg/wk); Adult (150–400 mg)',
+        doseSummary: '5–6 mg/kg/day or 8 mg/kg/wk (Child); 150 mg/wk or 50–200 mg/day (Adult)',
+        notesSummary: 'Max 400 mg/day.',
+        sourceLabel: 'PMC Tinea Capitis Review',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3047946/',
+        formulations: [
+          { label: 'Tablet 150 mg', type: 'tablet', mgPerTab: 150 },
+          { label: 'Tablet 50 mg', type: 'tablet', mgPerTab: 50 },
+          { label: 'Syrup 50 mg / 5 mL (10 mg/mL)', type: 'liquid', mgPerMl: 10 }
+        ],
+        indications: [
+          { id: 'tinea_daily', label: 'Tinea Capitis / Deep Mycosis (6 mg/kg/day)' },
+          { id: 'tinea_weekly', label: 'Weekly Pulse (8 mg/kg/wk; Adult 150–300 mg/wk)' },
+          { id: 'candidiasis', label: 'Mucosal Candidiasis (3 mg/kg/day)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (indId === 'tinea_weekly') {
+            const raw = wt * 8;
+            const capped = Math.min(raw, 400);
+            return { eligible: true, doseMg: roundDose(capped), freq: 'Once weekly', maxCap: '400 mg/dose', isCapped: raw > 400, duration: '4–12 weeks' };
+          }
+          if (indId === 'candidiasis') {
+            const raw = wt * 3;
+            const capped = Math.min(raw, 400);
+            return { eligible: true, doseMg: roundDose(capped), freq: `Once daily (after ${roundDose(Math.min(wt * 6, 400))} mg loading Day 1)`, maxCap: '400 mg/day', isCapped: raw > 400, duration: '7–14 days' };
+          }
+          const raw = wt * 6;
+          const capped = Math.min(raw, 400);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily', maxCap: '400 mg/day', isCapped: raw > 400, duration: '3–6 weeks' };
+        }
+      },
+      {
+        id: 'griseofulvin',
+        name: 'Griseofulvin',
+        class: 'Antifungals',
+        basisSummary: 'Child (Microsize 20–25 mg/kg/day; Ultramicrosize 10–15 mg/kg/day); Adult 500–1000 mg/day',
+        doseSummary: '20–25 mg/kg/day microsize (Child); 500–1000 mg/day (Adult)',
+        notesSummary: '6–12 wks for tinea capitis; take with fatty meal.',
+        sourceLabel: 'PMC Tinea Capitis Review',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3047946/',
+        formulations: [
+          { label: 'Tablet 250 mg', type: 'tablet', mgPerTab: 250 },
+          { label: 'Tablet 500 mg', type: 'tablet', mgPerTab: 500 },
+          { label: 'Oral Suspension 125 mg / 5 mL (25 mg/mL)', type: 'liquid', mgPerMl: 25 }
+        ],
+        indications: [
+          { id: 'microsize', label: 'Microsize (20–25 mg/kg/day)' },
+          { id: 'ultramicrosize', label: 'Ultramicrosize (10–15 mg/kg/day)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          const factor = indId === 'ultramicrosize' ? 12.5 : 22.5;
+          const max = indId === 'ultramicrosize' ? 750 : 1000;
+          const raw = wt * factor;
+          const capped = Math.min(raw, max);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily or divided BID with fatty meal', maxCap: `${max} mg/day`, isCapped: raw > max, duration: '6–12 weeks' };
+        }
+      },
+
+      // 3. ANTIBIOTICS
+      {
+        id: 'cephalexin',
+        name: 'Cephalexin',
+        class: 'Antibiotics',
+        basisSummary: 'Child (20 mg/kg/dose TID or 50 mg/kg/day); Adult 500 mg BID–QID',
+        doseSummary: '20 mg/kg/dose PO TID (Child); 500 mg TID–QID (Adult)',
+        notesSummary: 'Max 750 mg/dose (pediatric); 5–10 days for impetigo/cellulitis.',
+        sourceLabel: 'RCH Guidelines',
+        sourceUrl: 'https://www.rch.org.au/clinicalguide/guideline_index/cellulitis_and_skin_infections/',
+        formulations: [
+          { label: 'Capsule 500 mg', type: 'tablet', mgPerTab: 500 },
+          { label: 'Capsule 250 mg', type: 'tablet', mgPerTab: 250 },
+          { label: 'Syrup 125 mg / 5 mL (25 mg/mL)', type: 'liquid', mgPerMl: 25 },
+          { label: 'Syrup 250 mg / 5 mL (50 mg/mL)', type: 'liquid', mgPerMl: 50 }
+        ],
+        indications: [{ id: 'ssti', label: 'Impetigo / Cellulitis / Pyoderma' }],
+        calc: (ageMo, wt) => {
+          if (ageMo >= 216 || wt >= 40) {
+            return { eligible: true, doseMg: 500, freq: '3–4 times daily (TID–QID)', maxCap: '4000 mg/day', duration: '5–10 days' };
+          }
+          const raw = wt * 20;
+          const capped = Math.min(raw, 750);
+          return { eligible: true, doseMg: roundDose(capped), freq: '3 times daily (every 8 hours)', maxCap: '750 mg/dose', isCapped: raw > 750, duration: '5–10 days' };
+        }
+      },
+      {
+        id: 'amoxclav',
+        name: 'Amoxicillin-Clavulanate',
+        class: 'Antibiotics',
+        basisSummary: 'Child (22.5 mg/kg/dose amox Q12H); Adult 625 mg TID or 1000 mg BID',
+        doseSummary: '22.5 mg/kg/dose PO Q12H (Child); 875/125 mg BID or 500/125 mg TID (Adult)',
+        notesSummary: 'Max 875 mg/dose (amoxicillin component); 5–10 days for SSTI.',
+        sourceLabel: "Children's Mercy SSTI CPG",
+        sourceUrl: 'https://www.childrensmercy.org/health-care-providers/evidence-based-practice/cpgs-cpms-and-eras-pathways/skin-and-soft-tissue-infections-clinical-practice-guideline/antibiotic-dosing/',
+        formulations: [
+          { label: 'Tablet 625 mg (500 mg amox)', type: 'tablet', mgPerTab: 500 },
+          { label: 'Tablet 1000 mg (875 mg amox)', type: 'tablet', mgPerTab: 875 },
+          { label: 'Syrup 200 mg / 5 mL (40 mg/mL amox)', type: 'liquid', mgPerMl: 40 },
+          { label: 'Syrup 400 mg / 5 mL (80 mg/mL amox)', type: 'liquid', mgPerMl: 80 }
+        ],
+        indications: [{ id: 'ssti', label: 'Skin & Soft Tissue Infection (SSTI)' }],
+        calc: (ageMo, wt) => {
+          const raw = wt * 22.5;
+          const capped = Math.min(raw, 875);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Twice daily (every 12 hours)', maxCap: '875 mg/dose (amoxicillin)', isCapped: raw > 875, duration: '5–10 days' };
+        }
+      },
+      {
+        id: 'azithromycin',
+        name: 'Azithromycin',
+        class: 'Antibiotics',
+        basisSummary: 'Child (10 mg/kg D1 then 5 mg/kg D2–5); Adult 500 mg D1 then 250 mg D2–5',
+        doseSummary: '10 mg/kg D1, 5 mg/kg D2–5 (or 10 mg/kg/day × 3d); Adult 500 mg OD × 3d',
+        notesSummary: 'Max 500 mg/day; also used in pulse regimens for acne.',
+        sourceLabel: 'PMC Ambulatory Care',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7110901/',
+        formulations: [
+          { label: 'Tablet 500 mg', type: 'tablet', mgPerTab: 500 },
+          { label: 'Tablet 250 mg', type: 'tablet', mgPerTab: 250 },
+          { label: 'Syrup 100 mg / 5 mL (20 mg/mL)', type: 'liquid', mgPerMl: 20 },
+          { label: 'Syrup 200 mg / 5 mL (40 mg/mL)', type: 'liquid', mgPerMl: 40 }
+        ],
+        indications: [
+          { id: '5day', label: '5-Day Regimen (10 mg/kg D1, 5 mg/kg D2–5)' },
+          { id: '3day', label: '3-Day Regimen (10 mg/kg/day × 3d)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          const d1 = Math.min(wt * 10, 500);
+          if (indId === '3day') {
+            return { eligible: true, doseMg: roundDose(d1), freq: 'Once daily', maxCap: '500 mg/day', isCapped: wt * 10 > 500, duration: '3 days' };
+          }
+          const d2 = Math.min(wt * 5, 250);
+          return { eligible: true, doseMg: roundDose(d1), freq: `Day 1: ${roundDose(d1)} mg OD; Days 2–5: ${roundDose(d2)} mg OD`, maxCap: '500 mg D1 / 250 mg D2–5', isCapped: wt * 10 > 500, duration: '5 days' };
+        }
+      },
+      {
+        id: 'doxycycline',
+        name: 'Doxycycline',
+        class: 'Antibiotics',
+        basisSummary: '≥8 yrs & <45 kg (2.2 mg/kg/dose); ≥45 kg & Adult (100 mg OD/BID)',
+        doseSummary: '2.2 mg/kg/dose OD–BID (≥8 yrs <45 kg); 100 mg OD or BID (≥45 kg/Adult)',
+        notesSummary: 'Avoid routine use <8 yrs (tooth staining). Take with full glass of water upright.',
+        sourceLabel: 'Drugs.com / Mayo Clinic',
+        sourceUrl: 'https://www.drugs.com/dosage/doxycycline.html',
+        formulations: [
+          { label: 'Capsule / Tablet 100 mg', type: 'tablet', mgPerTab: 100 },
+          { label: 'Tablet 50 mg', type: 'tablet', mgPerTab: 50 }
+        ],
+        indications: [
+          { id: 'acne_rosacea', label: 'Acne / Rosacea / Bullous Pemphigoid (100 mg OD–BID)' },
+          { id: 'sti_infection', label: 'Chlamydia / Syphilis (penicillin-allergic) / SSTI (100 mg BID)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (ageMo < 96) {
+            return { eligible: false, alert: 'Avoid routine use under 8 years due to dental staining risk (unless life-threatening rickettsial/anthrax indication).', doseMg: 0, freq: '—', duration: '—' };
+          }
+          if (wt < 45) {
+            const perDose = Math.min(roundDose(wt * 2.2), 100);
+            return { eligible: true, doseMg: perDose, freq: indId === 'sti_infection' ? 'Twice daily (Q12H)' : 'Once daily (or BID Day 1)', maxCap: '100 mg/dose', isCapped: wt * 2.2 > 100, duration: indId === 'acne_rosacea' ? '6–12 weeks' : '7–14 days', alert: 'Take upright with plenty of water to prevent esophagitis; phototoxicity warning.' };
+          }
+          return { eligible: true, doseMg: 100, freq: indId === 'sti_infection' ? 'Twice daily (every 12 hours)' : 'Once or twice daily', maxCap: '200 mg/day', duration: indId === 'acne_rosacea' ? '6–12 weeks' : '7–14 days', alert: 'Take upright with plenty of water; advise sun protection.' };
+        }
+      },
+      {
+        id: 'ceftriaxone',
+        name: 'Ceftriaxone',
+        class: 'Antibiotics',
+        basisSummary: 'Child (50–100 mg/kg/day IV/IM); Adult (1–2 g/day; 500 mg IM gonorrhea)',
+        doseSummary: '50–75 mg/kg/day IV/IM (Child); 1–2 g IV/IM OD (Adult SSTI); 500 mg IM × 1 (Gonorrhea)',
+        notesSummary: 'Max 2 g/day (pediatric) / 4 g/day (adult severe). Avoid with Ca-containing IV in neonates.',
+        sourceLabel: 'Drugs.com / RxList',
+        sourceUrl: 'https://www.drugs.com/dosage/ceftriaxone.html',
+        formulations: [
+          { label: 'Injection 1000 mg (1 g) vial', type: 'tablet', mgPerTab: 1000 },
+          { label: 'Injection 500 mg vial', type: 'tablet', mgPerTab: 500 },
+          { label: 'Injection 250 mg vial', type: 'tablet', mgPerTab: 250 }
+        ],
+        indications: [
+          { id: 'ssti_severe', label: 'Severe Cellulitis / SSTI (50–75 mg/kg/day; Adult 1–2 g/day)' },
+          { id: 'gonorrhea', label: 'Uncomplicated Gonorrhea (Adult 500 mg IM × 1; <45 kg 25–50 mg/kg)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (indId === 'gonorrhea') {
+            if (wt < 45) {
+              const d = Math.min(roundDose(wt * 50), 1000);
+              return { eligible: true, doseMg: d, freq: 'Single IM dose', maxCap: '1000 mg', duration: '1 day' };
+            }
+            return { eligible: true, doseMg: 500, freq: 'Single IM dose (500 mg; 1 g if ≥150 kg)', maxCap: '1000 mg', duration: '1 day' };
+          }
+          if (ageMo >= 216 || wt >= 45) {
+            return { eligible: true, doseMg: 1000, freq: 'Once daily IV/IM (1–2 g/day)', maxCap: '4000 mg/day', duration: '5–14 days' };
+          }
+          const raw = wt * 60;
+          const capped = Math.min(raw, 2000);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily IV/IM (or divided Q12H)', maxCap: '2000 mg/day', isCapped: raw > 2000, duration: '5–10 days', alert: ageMo < 1 ? 'Avoid in hyperbilirubinemic neonates or with IV calcium.' : '' };
+        }
+      },
+
+      // 4. LEPROSY MDT & MYCOBACTERIAL
+      {
+        id: 'dapsone',
+        name: 'Dapsone',
+        class: 'Leprosy MDT & Mycobacterial',
+        basisSummary: '<10 yrs (2 mg/kg/day); 10–14 yrs (50 mg/day); ≥15 yrs & Adult (100 mg/day)',
+        doseSummary: '2 mg/kg/day (<10 yrs); 50 mg OD (10–14 yrs); 100 mg OD (≥15 yrs/Adult)',
+        notesSummary: 'Check G6PD before starting; monitor CBC & LFTs for methemoglobinemia/hemolysis.',
+        sourceLabel: 'WHO Leprosy MDT',
+        sourceUrl: 'https://cdn.who.int/media/docs/default-source/ntds/leprosy/recommended-treatment-regimens-for-leprosy.pdf?sfvrsn=ac6de2af_3',
+        formulations: [
+          { label: 'Tablet 100 mg', type: 'tablet', mgPerTab: 100 },
+          { label: 'Tablet 50 mg', type: 'tablet', mgPerTab: 50 },
+          { label: 'Tablet 25 mg', type: 'tablet', mgPerTab: 25 }
+        ],
+        indications: [
+          { id: 'leprosy', label: 'Leprosy MDT (WHO Age/Weight Regimen)' },
+          { id: 'dh_acne', label: 'Dermatitis Herpetiformis / Bullous Dermatoses (50–100 mg/day)' }
+        ],
+        calc: (ageMo, wt) => {
+          if (ageMo < 120) {
+            const raw = wt * 2;
+            const capped = Math.min(raw, 50);
+            return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily', maxCap: '2 mg/kg/day (max 50 mg/day <10 yrs)', isCapped: raw > 50, duration: '6 mo (PB) / 12 mo (MB)', alert: 'Mandatory G6PD screen prior to therapy; monitor Hb/reticulocytes.' };
+          }
+          if (ageMo < 180) {
+            return { eligible: true, doseMg: 50, freq: 'Once daily', maxCap: '50 mg/day (10–14 yrs)', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Check G6PD status; monitor CBC & LFTs.' };
+          }
+          return { eligible: true, doseMg: 100, freq: 'Once daily', maxCap: '100 mg/day (up to 200 mg in DH)', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Check G6PD status; monitor CBC, LFTs, methemoglobin.' };
+        }
+      },
+      {
+        id: 'rifampicin',
+        name: 'Rifampicin',
+        class: 'Leprosy MDT & Mycobacterial',
+        basisSummary: 'Leprosy: <10 yrs (10 mg/kg/mo), 10–14 yrs (450 mg/mo), ≥15 yrs (600 mg/mo)',
+        doseSummary: 'Leprosy: 600 mg monthly (Adult), 450 mg monthly (10–14 yrs), 10 mg/kg monthly (<10 yrs)',
+        notesSummary: 'Take on empty stomach; orange-red body fluids; potent CYP450 inducer.',
+        sourceLabel: 'WHO Leprosy MDT',
+        sourceUrl: 'https://cdn.who.int/media/docs/default-source/ntds/leprosy/recommended-treatment-regimens-for-leprosy.pdf?sfvrsn=ac6de2af_3',
+        formulations: [
+          { label: 'Capsule 300 mg', type: 'tablet', mgPerTab: 300 },
+          { label: 'Capsule 450 mg', type: 'tablet', mgPerTab: 450 },
+          { label: 'Capsule 150 mg', type: 'tablet', mgPerTab: 150 }
+        ],
+        indications: [
+          { id: 'leprosy_mdt', label: 'Leprosy MDT (Once Monthly Supervised)' },
+          { id: 'hs_daily', label: 'Hidradenitis Suppurativa (+ Clindamycin) (300 mg BID / 10 mg/kg)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (indId === 'hs_daily') {
+            if (wt < 45) {
+              const raw = Math.min(roundDose(wt * 10), 600);
+              return { eligible: true, doseMg: raw, freq: 'Once daily (or divided BID)', maxCap: '600 mg/day', duration: '10–12 weeks', alert: 'Potent CYP450 inducer; check LFTs.' };
+            }
+            return { eligible: true, doseMg: 300, freq: 'Twice daily (600 mg/day)', maxCap: '600 mg/day', duration: '10–12 weeks', alert: 'Potent CYP450 inducer; orange-red urine/tears.' };
+          }
+          if (ageMo < 120) {
+            const raw = Math.min(roundDose(wt * 10), 300);
+            return { eligible: true, doseMg: raw, freq: 'Once a MONTH (supervised)', maxCap: '10 mg/kg/month', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Take on empty stomach; orange-red urine is normal.' };
+          }
+          if (ageMo < 180) {
+            return { eligible: true, doseMg: 450, freq: 'Once a MONTH (supervised)', maxCap: '450 mg/month', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Take on empty stomach; potent CYP450 inducer.' };
+          }
+          return { eligible: true, doseMg: 600, freq: 'Once a MONTH (supervised)', maxCap: '600 mg/month', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Take on empty stomach; potent CYP450 inducer.' };
+        }
+      },
+      {
+        id: 'clofazimine',
+        name: 'Clofazimine',
+        class: 'Leprosy MDT & Mycobacterial',
+        basisSummary: 'Adult (300 mg/mo + 50 mg OD); 10–14 yrs (150 mg/mo + 50 mg alt day); <10 yrs (100 mg/mo + 50 mg 2×/wk)',
+        doseSummary: '300 mg monthly + 50 mg daily (Adult); 150 mg monthly + 50 mg alt day (10–14 yrs)',
+        notesSummary: 'Causes reversible brownish-red skin pigmentation & dry skin; take with meals.',
+        sourceLabel: 'WHO Leprosy MDT',
+        sourceUrl: 'https://cdn.who.int/media/docs/default-source/ntds/leprosy/recommended-treatment-regimens-for-leprosy.pdf?sfvrsn=ac6de2af_3',
+        formulations: [
+          { label: 'Capsule 50 mg', type: 'tablet', mgPerTab: 50 },
+          { label: 'Capsule 100 mg', type: 'tablet', mgPerTab: 100 }
+        ],
+        indications: [
+          { id: 'leprosy_mdt', label: 'Leprosy MDT (WHO Regimen)' },
+          { id: 'enl', label: 'Type 2 Lepra Reaction / ENL (100 mg TID tapered)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (indId === 'enl') {
+            if (ageMo < 180) return { eligible: true, doseMg: 50, freq: 'Once to twice daily (specialist-guided)', maxCap: '100 mg/day', duration: 'Taper over months', alert: 'Take with meals; counsel on skin pigmentation.' };
+            return { eligible: true, doseMg: 100, freq: '2–3 times daily (200–300 mg/day initially, then taper)', maxCap: '300 mg/day', duration: 'Taper over 3–6 months', alert: 'Take with meals; monitor for GI symptoms & skin hyperpigmentation.' };
+          }
+          if (ageMo < 120) {
+            return { eligible: true, doseMg: 100, freq: '100 mg ONCE A MONTH + 50 mg twice weekly', maxCap: '100 mg/mo + 50 mg 2×/wk', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Counsel family on reversible reddish-brown skin discoloration.' };
+          }
+          if (ageMo < 180) {
+            return { eligible: true, doseMg: 150, freq: '150 mg ONCE A MONTH + 50 mg alternate days', maxCap: '150 mg/mo + 50 mg EOD', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Counsel on reversible skin pigmentation & xerosis.' };
+          }
+          return { eligible: true, doseMg: 300, freq: '300 mg ONCE A MONTH + 50 mg daily', maxCap: '300 mg/mo + 50 mg/day', duration: '6 mo (PB) / 12 mo (MB)', alert: 'Take with meals; counsel on reversible skin pigmentation.' };
+        }
+      },
+
+      // 5. ANTIVIRALS & ANTIPARASITICS
+      {
+        id: 'acyclovir',
+        name: 'Acyclovir',
+        class: 'Antivirals & Antiparasitics',
+        basisSummary: 'Child (20 mg/kg/dose QID); Adult (800 mg 5×/day zoster; 400 mg TID HSV)',
+        doseSummary: '20 mg/kg/dose QID (Child varicella); 800 mg 5×/day (Adult zoster); 400 mg TID (HSV)',
+        notesSummary: 'Max 800 mg/dose; ensure hydration; adjust in renal impairment.',
+        sourceLabel: 'PubMed / CDC',
+        sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2156984/',
+        formulations: [
+          { label: 'Tablet 400 mg', type: 'tablet', mgPerTab: 400 },
+          { label: 'Tablet 800 mg', type: 'tablet', mgPerTab: 800 },
+          { label: 'Suspension 200 mg / 5 mL (40 mg/mL)', type: 'liquid', mgPerMl: 40 }
+        ],
+        indications: [
+          { id: 'varicella', label: 'Varicella / Herpes Zoster' },
+          { id: 'hsv', label: 'Herpes Simplex (HSV)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (ageMo >= 216 || wt >= 45) {
+            if (indId === 'hsv') return { eligible: true, doseMg: 400, freq: '3 times daily (TID)', maxCap: '1200 mg/day', duration: '7–10 days (initial) / 5 days (recurrent)' };
+            return { eligible: true, doseMg: 800, freq: '5 times daily (every 4h while awake)', maxCap: '4000 mg/day', duration: '7 days' };
+          }
+          const factor = indId === 'hsv' ? 15 : 20;
+          const max = indId === 'hsv' ? 400 : 800;
+          const raw = wt * factor;
+          const capped = Math.min(raw, max);
+          return { eligible: true, doseMg: roundDose(capped), freq: '4 times daily (QID)', maxCap: `${max} mg/dose`, isCapped: raw > max, duration: indId === 'hsv' ? '7–10 days' : '5–7 days', alert: 'Ensure adequate hydration; adjust in renal impairment.' };
+        }
+      },
+      {
+        id: 'valacyclovir',
+        name: 'Valacyclovir',
+        class: 'Antivirals & Antiparasitics',
+        basisSummary: '2–<18 yrs (20 mg/kg/dose TID); Adult (1 g TID zoster; 500 mg–1 g BID HSV)',
+        doseSummary: '20 mg/kg/dose TID (2–17 yrs varicella); 1000 mg TID (Adult zoster); 2 g BID × 1d (labialis)',
+        notesSummary: 'Max 1000 mg/dose (TID).',
+        sourceLabel: 'FDA Valtrex Label',
+        sourceUrl: 'https://www.accessdata.fda.gov/drugsatfda_docs/label/2021/020487s022lbl.pdf',
+        formulations: [
+          { label: 'Tablet 1000 mg', type: 'tablet', mgPerTab: 1000 },
+          { label: 'Tablet 500 mg', type: 'tablet', mgPerTab: 500 }
+        ],
+        indications: [
+          { id: 'varicella', label: 'Varicella / Herpes Zoster' },
+          { id: 'labialis', label: 'Herpes Labialis (≥12 yrs: 2 g BID × 1d)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (indId === 'labialis') {
+            if (ageMo < 144) return { eligible: false, alert: 'Herpes labialis regimen approved for ≥12 years.', doseMg: 0, freq: '—', duration: '—' };
+            return { eligible: true, doseMg: 2000, freq: 'Every 12 hours (2 doses)', maxCap: '4000 mg/day', duration: '1 day' };
+          }
+          if (ageMo < 24) return { eligible: false, alert: 'Varicella dosing established for ≥2 years.', doseMg: 0, freq: '—', duration: '—' };
+          if (ageMo >= 216) return { eligible: true, doseMg: 1000, freq: '3 times daily (TID)', maxCap: '3000 mg/day', duration: '7 days (zoster)' };
+          const raw = wt * 20;
+          const capped = Math.min(raw, 1000);
+          return { eligible: true, doseMg: roundDose(capped), freq: '3 times daily (TID)', maxCap: '1000 mg/dose', isCapped: raw > 1000, duration: '5 days' };
+        }
+      },
+      {
+        id: 'ivermectin',
+        name: 'Ivermectin',
+        class: 'Antivirals & Antiparasitics',
+        basisSummary: '≥15 kg & Adult (200 mcg/kg = 0.2 mg/kg)',
+        doseSummary: '200 mcg/kg (0.2 mg/kg) PO single dose (Adult typical 12 mg)',
+        notesSummary: 'Repeat in 7–14 days for scabies; avoid routine use <15 kg.',
+        sourceLabel: 'PMC Ivermectin Review',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8354388/',
+        formulations: [
+          { label: 'Tablet 12 mg', type: 'tablet', mgPerTab: 12 },
+          { label: 'Tablet 6 mg', type: 'tablet', mgPerTab: 6 },
+          { label: 'Tablet 3 mg', type: 'tablet', mgPerTab: 3 }
+        ],
+        indications: [{ id: 'scabies', label: 'Scabies / Pediculosis / CLM (200 mcg/kg)' }],
+        calc: (ageMo, wt) => {
+          if (wt < 15) return { eligible: false, alert: 'Avoid routine oral ivermectin <15 kg (prefer topical permethrin 5%).', doseMg: 0, freq: '—', duration: '—' };
+          const raw = wt * 0.2;
+          const capped = Math.min(raw, 15);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Single oral dose (repeat Day 7–14 if scabies)', maxCap: '200 mcg/kg', isCapped: raw > 15, duration: '1–2 doses' };
+        }
+      },
+      {
+        id: 'albendazole',
+        name: 'Albendazole',
+        class: 'Antivirals & Antiparasitics',
+        basisSummary: '1–2 yrs, ≥2 yrs & Adult',
+        doseSummary: '200 mg OD (1–2 yrs) or 400 mg OD (≥2 yrs/Adult) × 3 days (CLM)',
+        notesSummary: 'Single dose for pinworm; 3 days for cutaneous larva migrans.',
+        sourceLabel: 'Drugs.com Albendazole',
+        sourceUrl: 'https://www.drugs.com/dosage/albendazole.html',
+        formulations: [
+          { label: 'Tablet 400 mg', type: 'tablet', mgPerTab: 400 },
+          { label: 'Suspension 200 mg / 5 mL (40 mg/mL)', type: 'liquid', mgPerMl: 40 }
+        ],
+        indications: [
+          { id: 'clm', label: 'Cutaneous Larva Migrans (× 3 days)' },
+          { id: 'pinworm', label: 'Enterobiasis / Pinworm (Single dose)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (ageMo < 12) return { eligible: false, alert: 'Not routinely recommended under 1 year without specialist guidance.', doseMg: 0, freq: '—', duration: '—' };
+          const dose = ageMo < 24 ? 200 : 400;
+          return { eligible: true, doseMg: dose, freq: 'Once daily with fatty meal', maxCap: '400 mg/day', duration: indId === 'clm' ? '3 days' : 'Single dose (repeat in 2 wks)' };
+        }
+      },
+
+      // 6. CORTICOSTEROIDS
+      {
+        id: 'prednisolone',
+        name: 'Prednisolone',
+        class: 'Corticosteroids',
+        basisSummary: 'Child & Adult (0.5–2 mg/kg/day)',
+        doseSummary: '0.5–1 mg/kg/day PO (moderate); 1–2 mg/kg/day (severe bullous/erythroderma)',
+        notesSummary: 'Morning single dose after food; taper after control.',
+        sourceLabel: 'IADVL Steroid Manual',
+        sourceUrl: 'https://webflow-site-files.s3.ap-south-1.amazonaws.com/iadvl/E-Books/85-IADVL%20Users%20Manual%20of%20Systemic%20and%20Topical%20Steroids.pdf',
+        formulations: [
+          { label: 'Tablet 10 mg', type: 'tablet', mgPerTab: 10 },
+          { label: 'Tablet 5 mg', type: 'tablet', mgPerTab: 5 },
+          { label: 'Syrup 5 mg / 5 mL (1 mg/mL)', type: 'liquid', mgPerMl: 1 },
+          { label: 'Syrup 15 mg / 5 mL (3 mg/mL)', type: 'liquid', mgPerMl: 3 }
+        ],
+        indications: [
+          { id: 'mod', label: 'Moderate Flare / Eczema / Urticaria (0.5–1 mg/kg/day)' },
+          { id: 'severe', label: 'Severe / Pemphigus / Erythroderma (1–2 mg/kg/day)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          const factor = indId === 'severe' ? 1.5 : 0.75;
+          const raw = wt * factor;
+          const capped = Math.min(raw, 80);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily in the morning after food', maxCap: '60–80 mg/day', isCapped: raw > 80, duration: 'Short course + taper', alert: 'Taper gradually if >7–14 days; monitor BP, glucose, GI.' };
+        }
+      },
+      {
+        id: 'dexamethasone',
+        name: 'Dexamethasone',
+        class: 'Corticosteroids',
+        basisSummary: 'Child (0.15–0.6 mg/kg/day); Adult Oral (0.5–9 mg/day) or DCP Pulse (100 mg IV × 3d)',
+        doseSummary: '0.15–0.3 mg/kg/day (Child); 2–5 mg oral mini-pulse 2d/wk (Vitiligo/AA); 100 mg IV × 3d q28d (DCP)',
+        notesSummary: '0.75 mg dexamethasone ≈ 5 mg prednisolone. Monitor BP, blood sugar, bone density.',
+        sourceLabel: 'IJDVL DCP / Drugs.com',
+        sourceUrl: 'https://ijdvl.com/dexamethasone-cyclophosphamide-pulse-therapy-in-pemphigus/',
+        formulations: [
+          { label: 'Tablet 0.5 mg', type: 'tablet', mgPerTab: 0.5 },
+          { label: 'Tablet 4 mg', type: 'tablet', mgPerTab: 4 },
+          { label: 'Injection 100 mg (DCP Pulse)', type: 'tablet', mgPerTab: 100 }
+        ],
+        indications: [
+          { id: 'omp', label: 'Oral Mini-Pulse (Vitiligo / Alopecia Areata: 2 consecutive days/wk)' },
+          { id: 'dcp', label: 'DCP Pulse Therapy (Pemphigus: 100 mg IV × 3d monthly)' },
+          { id: 'daily', label: 'Daily Anti-inflammatory (0.15 mg/kg/day; Adult 2–8 mg/day)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (indId === 'dcp') {
+            if (ageMo < 180) return { eligible: false, alert: 'Standard 100 mg DCP pulse is an adult regimen; pediatric pulse uses weight-adjusted methylprednisolone/dexamethasone.', doseMg: 0, freq: '—', duration: '—' };
+            return { eligible: true, doseMg: 100, freq: '100 mg IV in 500 mL D5% over 2h × 3 consecutive days every 28 days', maxCap: '100 mg/day', duration: 'Monthly pulses (Phase I–III)', alert: 'Combine with cyclophosphamide 500 mg IV Day 2 + 50 mg PO daily per DCP protocol.' };
+          }
+          if (indId === 'omp') {
+            const ompDose = wt < 35 ? 2.5 : 5;
+            return { eligible: true, doseMg: ompDose, freq: 'Once daily on 2 consecutive days per week (e.g. Sat–Sun)', maxCap: '5 mg/day (OMP)', duration: '3–6 months', alert: 'Low adrenal suppression risk vs daily steroids; monitor weight/BP.' };
+          }
+          const raw = wt * 0.15;
+          const capped = Math.min(raw, 8);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily or divided BID', maxCap: '8–10 mg/day', isCapped: raw > 8, duration: 'Short course + taper' };
+        }
+      },
+
+      // 7. IMMUNOMODULATORS & JAK / BIOLOGICS
+      {
+        id: 'tofacitinib',
+        name: 'Tofacitinib',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: 'Adult & Adolescent (≥40 kg: 5 mg BID); Child (<40 kg: 5 mg OD or 3.2–5 mg)',
+        doseSummary: '5 mg PO BID (Adult Alopecia Areata / Vitiligo / AD); 5 mg OD (pediatric/taper)',
+        notesSummary: 'Screen TB, HBV/HCV, CBC, LFTs, fasting lipids before & during therapy.',
+        sourceLabel: 'PMC Tofacitinib Dermatology',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC6743407/',
+        formulations: [
+          { label: 'Tablet 5 mg', type: 'tablet', mgPerTab: 5 },
+          { label: 'Tablet 11 mg XR', type: 'tablet', mgPerTab: 11 }
+        ],
+        indications: [
+          { id: 'aa_vitiligo', label: 'Alopecia Areata / Vitiligo (5 mg BID)' },
+          { id: 'maintenance', label: 'Low-dose / Pediatric / Taper (5 mg OD)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (ageMo < 24) return { eligible: false, alert: 'Not established under 2 years.', doseMg: 0, freq: '—', duration: '—' };
+          if (wt < 40 || indId === 'maintenance') {
+            return { eligible: true, doseMg: 5, freq: 'Once daily', maxCap: '5 mg/day (<40 kg)', duration: '3–6+ months (assess response)', alert: 'JAK inhibitor: screen TB/viral hepatitis, monitor CBC, LFTs, lipids.' };
+          }
+          return { eligible: true, doseMg: 5, freq: 'Twice daily (10 mg/day total)', maxCap: '10 mg/day (20 mg/day max in refractory cases)', duration: '3–6+ months, then taper', alert: 'JAK inhibitor: screen TB/HBV/HCV; monitor CBC, LFTs, lipids, VTE risk.' };
+        }
+      },
+      {
+        id: 'methotrexate',
+        name: 'Methotrexate',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: 'Child (0.1–0.4 mg/kg/wk); Adult (7.5–25 mg/wk)',
+        doseSummary: '0.1–0.4 mg/kg/week PO/SC (Child); 10–25 mg/week (Adult)',
+        notesSummary: 'Max 25 mg/week; always co-prescribe folic acid.',
+        sourceLabel: 'PMC MTX Guidelines',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11096036/',
+        formulations: [
+          { label: 'Tablet 7.5 mg', type: 'tablet', mgPerTab: 7.5 },
+          { label: 'Tablet 5 mg', type: 'tablet', mgPerTab: 5 },
+          { label: 'Tablet 2.5 mg', type: 'tablet', mgPerTab: 2.5 }
+        ],
+        indications: [
+          { id: 'psoriasis_ad', label: 'Psoriasis / Severe AD / Alopecia (0.3 mg/kg/wk; Adult 15 mg/wk)' }
+        ],
+        calc: (ageMo, wt) => {
+          const raw = wt * 0.3;
+          const capped = Math.min(raw, 25);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once WEEKLY (same day each week)', maxCap: '25 mg/week', isCapped: raw > 25, duration: 'Long-term maintenance', alert: 'Co-prescribe folic acid 5 mg/wk (non-MTX day); monitor CBC, LFTs, creatinine.' };
+        }
+      },
+      {
+        id: 'cyclosporine',
+        name: 'Cyclosporine',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: 'Child & Adult (2.5–5 mg/kg/day)',
+        doseSummary: '2.5–5 mg/kg/day PO in 2 divided doses',
+        notesSummary: 'Monitor BP and serum creatinine every 2–4 weeks.',
+        sourceLabel: 'PMC Pediatric Cyclosporine',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10334329/',
+        formulations: [
+          { label: 'Capsule 100 mg', type: 'tablet', mgPerTab: 100 },
+          { label: 'Capsule 50 mg', type: 'tablet', mgPerTab: 50 },
+          { label: 'Capsule 25 mg', type: 'tablet', mgPerTab: 25 }
+        ],
+        indications: [{ id: 'ad_psoriasis', label: 'Severe Atopic Dermatitis / Psoriasis / CSU (3.5 mg/kg/day)' }],
+        calc: (ageMo, wt) => {
+          const daily = roundDose(wt * 3.5);
+          const perDose = roundDose(daily / 2);
+          return { eligible: true, doseMg: perDose, freq: `Twice daily (${daily} mg/day total)`, maxCap: '5 mg/kg/day', duration: 'Short-to-medium term (3–6 mo)', alert: 'Check baseline & regular BP, serum creatinine, lipids, Mg/K.' };
+        }
+      },
+      {
+        id: 'azathioprine',
+        name: 'Azathioprine',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: 'Adult (1–3 mg/kg/day); Child (1–4 mg/kg/day)',
+        doseSummary: '1–3 mg/kg/day PO (Adult); 1–4 mg/kg/day (Child)',
+        notesSummary: 'Check TPMT/NUDT15 before starting; monitor CBC & LFTs.',
+        sourceLabel: 'PMC Azathioprine Dermatology',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7672387/',
+        formulations: [
+          { label: 'Tablet 50 mg', type: 'tablet', mgPerTab: 50 },
+          { label: 'Tablet 25 mg', type: 'tablet', mgPerTab: 25 }
+        ],
+        indications: [
+          { id: 'pemphigus_ad', label: 'Pemphigus / Severe AD / Parthenium Dermatitis (2 mg/kg/day)' }
+        ],
+        calc: (ageMo, wt) => {
+          const daily = Math.min(roundDose(wt * 2), 200);
+          return { eligible: true, doseMg: daily, freq: 'Once daily or divided BID with meals', maxCap: '3 mg/kg/day (typical max 200 mg/day)', isCapped: wt * 2 > 200, duration: 'Long-term steroid-sparing', alert: 'Check TPMT/NUDT15 status; monitor CBC & LFTs biweekly initially.' };
+        }
+      },
+      {
+        id: 'mmf',
+        name: 'Mycophenolate Mofetil',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: 'Adult (1000–1500 mg BID); Child (30–50 mg/kg/day divided BID)',
+        doseSummary: '1–1.5 g PO BID (Adult); 30–50 mg/kg/day divided BID (Child)',
+        notesSummary: 'Max 3 g/day; teratogenic; monitor CBC & LFTs.',
+        sourceLabel: 'DermNet / PMC',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10966277/',
+        formulations: [
+          { label: 'Tablet 500 mg', type: 'tablet', mgPerTab: 500 },
+          { label: 'Capsule 250 mg', type: 'tablet', mgPerTab: 250 }
+        ],
+        indications: [{ id: 'pemphigus_lupus', label: 'Pemphigus / Cutaneous Lupus / Severe AD' }],
+        calc: (ageMo, wt) => {
+          if (ageMo >= 216 || wt >= 50) {
+            return { eligible: true, doseMg: 1000, freq: 'Twice daily (2000 mg/day; up to 1500 mg BID)', maxCap: '3000 mg/day', duration: 'Long-term maintenance', alert: 'Teratogenic: strict contraception; monitor CBC & LFTs.' };
+          }
+          const daily = Math.min(roundDose(wt * 40), 2000);
+          const perDose = roundDose(daily / 2);
+          return { eligible: true, doseMg: perDose, freq: `Twice daily (${daily} mg/day total)`, maxCap: '2000 mg/day (pediatric)', isCapped: wt * 40 > 2000, duration: 'Long-term maintenance', alert: 'Monitor CBC & LFTs; avoid in pregnancy.' };
+        }
+      },
+      {
+        id: 'apremilast',
+        name: 'Apremilast',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: 'Adult (30 mg BID after 5-day titration); Child ≥6 yrs (20 mg BID 20–50 kg; 30 mg BID ≥50 kg)',
+        doseSummary: '30 mg PO BID (Adult & ≥50 kg); 20 mg PO BID (6–17 yrs, 20–<50 kg)',
+        notesSummary: '5-day starter titration reduces GI upset; reduce to OD if CrCl <30.',
+        sourceLabel: 'Next Steps / StatPearls',
+        sourceUrl: 'https://www.ncbi.nlm.nih.gov/books/NBK572078/',
+        formulations: [
+          { label: 'Tablet 30 mg', type: 'tablet', mgPerTab: 30 },
+          { label: 'Tablet 20 mg', type: 'tablet', mgPerTab: 20 },
+          { label: 'Tablet 10 mg (titration)', type: 'tablet', mgPerTab: 10 }
+        ],
+        indications: [{ id: 'psoriasis_vitiligo', label: 'Plaque Psoriasis / Behçet Aphthae' }],
+        calc: (ageMo, wt) => {
+          if (ageMo < 72 || wt < 20) return { eligible: false, alert: 'Not established under 6 years or <20 kg.', doseMg: 0, freq: '—', duration: '—' };
+          if (ageMo < 216 && wt < 50) {
+            return { eligible: true, doseMg: 20, freq: 'Twice daily (after 5-day titration)', maxCap: '40 mg/day', duration: 'Long-term', alert: 'Monitor for GI upset, weight loss, mood changes.' };
+          }
+          return { eligible: true, doseMg: 30, freq: 'Twice daily (after 5-day starter titration)', maxCap: '60 mg/day', duration: 'Long-term', alert: 'Use 5-day titration pack; reduce to 30 mg OD if severe renal impairment.' };
+        }
+      },
+      {
+        id: 'hcq',
+        name: 'Hydroxychloroquine',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: '≤5 mg/kg/day real body weight (typical Adult 200 mg OD–BID)',
+        doseSummary: '≤5 mg/kg/day PO (typically 200 mg BID or 200–400 mg/day)',
+        notesSummary: 'Max 5 mg/kg/day (≤400 mg/day) to minimize retinopathy; baseline & annual eye exam.',
+        sourceLabel: 'PMC HCQ Safety',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11850461/',
+        formulations: [
+          { label: 'Tablet 200 mg', type: 'tablet', mgPerTab: 200 },
+          { label: 'Tablet 400 mg', type: 'tablet', mgPerTab: 400 }
+        ],
+        indications: [{ id: 'dle_lp', label: 'Cutaneous Lupus (DLE) / Lichen Planus / PMLE' }],
+        calc: (ageMo, wt) => {
+          const raw = wt * 5;
+          const capped = Math.min(raw, 400);
+          return { eligible: true, doseMg: roundDose(capped), freq: capped >= 300 ? 'Divided BID (e.g. 200 mg BID)' : 'Once daily with food', maxCap: '5 mg/kg/day (max 400 mg/day)', isCapped: raw > 400, duration: 'Long-term', alert: 'Baseline & periodic retinal/OCT screening; caution with QT-prolonging drugs.' };
+        }
+      },
+      {
+        id: 'omalizumab',
+        name: 'Omalizumab',
+        class: 'Immunomodulators & JAK/Biologics',
+        basisSummary: '≥12 yrs & Adult (Chronic Spontaneous Urticaria)',
+        doseSummary: '150 mg or 300 mg SC every 4 weeks',
+        notesSummary: 'Not weight-dependent for CSU; monitor for anaphylaxis after injection.',
+        sourceLabel: 'PMC Omalizumab CSU',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5806710/',
+        formulations: [
+          { label: 'Pre-filled Syringe 150 mg SC', type: 'tablet', mgPerTab: 150 },
+          { label: 'Pre-filled Syringe 300 mg SC', type: 'tablet', mgPerTab: 300 }
+        ],
+        indications: [{ id: 'csu', label: 'Chronic Spontaneous Urticaria (≥12 yrs)' }],
+        calc: (ageMo) => {
+          if (ageMo < 144) return { eligible: false, alert: 'CSU indication approved for ≥12 years.', doseMg: 0, freq: '—', duration: '—' };
+          return { eligible: true, doseMg: 300, freq: 'Subcutaneous every 4 weeks (150–300 mg)', maxCap: '300 mg q4wks (CSU)', duration: '6+ months', alert: 'Observe patient post-injection for rare anaphylaxis.' };
+        }
+      },
+
+      // 8. RETINOIDS & PIGMENT
+      {
+        id: 'isotretinoin',
+        name: 'Isotretinoin',
+        class: 'Retinoids & Pigment',
+        basisSummary: '≥12 yrs & Adult (0.5–1 mg/kg/day)',
+        doseSummary: '0.5–1 mg/kg/day PO in 2 divided doses × 15–20 wks (low-dose 20 mg OD/alt day)',
+        notesSummary: 'Take with meals; strict pregnancy prevention & lipid/LFT monitoring.',
+        sourceLabel: 'DailyMed Isotretinoin',
+        sourceUrl: 'https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=1cf11710-f966-4529-8e08-02175f588bca',
+        formulations: [
+          { label: 'Capsule 20 mg', type: 'tablet', mgPerTab: 20 },
+          { label: 'Capsule 10 mg', type: 'tablet', mgPerTab: 10 }
+        ],
+        indications: [
+          { id: 'standard', label: 'Standard Nodular Acne (0.5–1 mg/kg/day)' },
+          { id: 'lowdose', label: 'Low-Dose Moderate Acne (0.25–0.4 mg/kg/day)' }
+        ],
+        calc: (ageMo, wt, indId) => {
+          if (ageMo < 144) return { eligible: false, alert: 'Indicated for patients ≥12 years of age.', doseMg: 0, freq: '—', duration: '—' };
+          if (indId === 'lowdose') {
+            const daily = Math.min(roundDose(wt * 0.35), 20);
+            return { eligible: true, doseMg: daily, freq: 'Once daily with meal', maxCap: '20 mg/day (low-dose)', duration: '16–24 weeks', alert: 'Teratogenic: strict pregnancy prevention + fasting lipids & LFTs.' };
+          }
+          const daily = roundDose(wt * 0.75);
+          const perDose = roundDose(daily / 2);
+          return { eligible: true, doseMg: perDose, freq: `Twice daily with meals (${daily} mg/day total)`, maxCap: '1 mg/kg/day (up to 2 mg/kg/day severe)', duration: '15–20 weeks (target 120–150 mg/kg cumulative)', alert: 'Teratogenic: strict pregnancy prevention + fasting lipids & LFTs.' };
+        }
+      },
+      {
+        id: 'acitretin',
+        name: 'Acitretin',
+        class: 'Retinoids & Pigment',
+        basisSummary: 'Child (≤0.5–1 mg/kg/day); Adult (25–50 mg/day)',
+        doseSummary: '≤0.5–1 mg/kg/day (Child); 25–50 mg PO OD (Adult psoriasis/keratinization)',
+        notesSummary: 'Teratogenic (3-yr post-stop avoidance in females); monitor lipids, LFTs, bone age.',
+        sourceLabel: 'ScholarHub Pediatric Review',
+        sourceUrl: 'https://scholarhub.ui.ac.id/cgi/viewcontent.cgi?article=1064&context=jdvi',
+        formulations: [
+          { label: 'Capsule 25 mg', type: 'tablet', mgPerTab: 25 },
+          { label: 'Capsule 10 mg', type: 'tablet', mgPerTab: 10 }
+        ],
+        indications: [{ id: 'keratinization', label: 'Psoriasis / Palmoplantar Keratoderma / Ichthyosis' }],
+        calc: (ageMo, wt) => {
+          const raw = wt * 0.5;
+          const capped = Math.min(raw, 50);
+          return { eligible: true, doseMg: roundDose(capped), freq: 'Once daily with meal', maxCap: '50–75 mg/day', isCapped: raw > 50, duration: 'Long-term as indicated', alert: 'Teratogenic (avoid pregnancy for 3 yrs post-therapy); monitor LFTs, lipids.' };
+        }
+      },
+      {
+        id: 'txa',
+        name: 'Tranexamic Acid',
+        class: 'Retinoids & Pigment',
+        basisSummary: 'Adult Melasma (250 mg BID)',
+        doseSummary: '250 mg PO twice daily × 8–12 wks (up to 6 mo)',
+        notesSummary: 'Screen for thromboembolic risk factors; avoid with combined oral contraceptives.',
+        sourceLabel: 'PMC Melasma TXA',
+        sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10238972/',
+        formulations: [
+          { label: 'Tablet 500 mg (half tab = 250 mg)', type: 'tablet', mgPerTab: 500 },
+          { label: 'Tablet 250 mg', type: 'tablet', mgPerTab: 250 }
+        ],
+        indications: [{ id: 'melasma', label: 'Moderate-to-Severe Melasma (Adult)' }],
+        calc: (ageMo) => {
+          if (ageMo < 216) return { eligible: false, alert: 'Oral tranexamic acid for melasma is an adult regimen (≥18 years).', doseMg: 0, freq: '—', duration: '—' };
+          return { eligible: true, doseMg: 250, freq: 'Twice daily (500 mg/day total)', maxCap: '500 mg/day (melasma)', duration: '8–12 weeks (up to 6 mo)', alert: 'Screen for DVT/PE history, thrombophilia, smoking, or OCP use.' };
+        }
+      }
+    ];
+
+    function roundDose(val) {
+      return Math.round(val * 100) / 100;
+    }
+
+    // State
+    const state = {
+      selectedDrugId: 'tofacitinib',
+      ageVal: 28,
+      ageUnit: 'years',
+      autoWeight: true,
+      weightKg: 60,
+      formulationIdx: 0,
+      indicationId: 'aa_vitiligo',
+      tableFilterClass: 'All',
+      tableSearch: '',
+      rxTray: []
+    };
+
+    try {
+      const saved = localStorage.getItem('dermdose_rx_tray');
+      if (saved) state.rxTray = JSON.parse(saved);
+    } catch (e) {}
+
+    function saveTray() {
+      try {
+        localStorage.setItem('dermdose_rx_tray', JSON.stringify(state.rxTray));
+      } catch (e) {}
+    }
+
+    function getAgeMonths() {
+      const v = parseFloat(state.ageVal) || 0;
+      return state.ageUnit === 'years' ? v * 12 : v;
+    }
+
+    function getSelectedDrug() {
+      return DRUGS.find(d => d.id === state.selectedDrugId) || DRUGS[0];
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('opacity-0');
+      setTimeout(() => el.classList.add('opacity-0'), 2200);
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard')).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast('Copied to clipboard'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    function populateDrugSelect(filterText = '') {
+      const sel = document.getElementById('drug-select');
+      const q = filterText.trim().toLowerCase();
+      const filtered = DRUGS.filter(d => d.name.toLowerCase().includes(q) || d.class.toLowerCase().includes(q));
+      sel.innerHTML = '';
+      if (filtered.length === 0) {
+        const opt = document.createElement('option');
+        opt.textContent = 'No matching drug';
+        opt.disabled = true;
+        sel.appendChild(opt);
+        return;
+      }
+      filtered.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = `${d.name} (${d.class})`;
+        if (d.id === state.selectedDrugId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (!filtered.some(d => d.id === state.selectedDrugId)) {
+        state.selectedDrugId = filtered[0].id;
+        state.formulationIdx = 0;
+        state.indicationId = filtered[0].indications[0].id;
+      }
+    }
+
+    function populateFormulationAndIndication() {
+      const drug = getSelectedDrug();
+      const fSel = document.getElementById('formulation-select');
+      fSel.innerHTML = '';
+      drug.formulations.forEach((f, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = f.label;
+        if (idx === state.formulationIdx) opt.selected = true;
+        fSel.appendChild(opt);
+      });
+
+      const iSel = document.getElementById('indication-select');
+      iSel.innerHTML = '';
+      drug.indications.forEach(ind => {
+        const opt = document.createElement('option');
+        opt.value = ind.id;
+        opt.textContent = ind.label;
+        if (ind.id === state.indicationId) opt.selected = true;
+        iSel.appendChild(opt);
+      });
+    }
+
+    function updateWeightFromAgeIfAuto() {
+      const ageMo = getAgeMonths();
+      const note = document.getElementById('weight-source-note');
+      const wInput = document.getElementById('weight-input');
+      if (state.autoWeight) {
+        const est = estimateWeightKg(ageMo);
+        state.weightKg = est;
+        wInput.value = est;
+        note.textContent = ageMo >= 216
+          ? 'Estimated adult standard (60 kg)'
+          : `Estimated WHO/IAP median for ${state.ageVal || 0} ${state.ageUnit}`;
+      } else {
+        note.textContent = 'Using manually entered patient weight';
+      }
+    }
+
+    function renderResultCard() {
+      const drug = getSelectedDrug();
+      const ageMo = getAgeMonths();
+      const wt = parseFloat(state.weightKg) || 0;
+      const form = drug.formulations[state.formulationIdx] || drug.formulations[0];
+      const res = drug.calc(ageMo, wt, state.indicationId);
+
+      const srcLink = document.getElementById('result-source-link');
+      srcLink.href = drug.sourceUrl;
+      srcLink.querySelector('span').textContent = `Source: ${drug.sourceLabel}`;
+
+      const body = document.getElementById('result-card-body');
+      let volumeText = '';
+      if (res.eligible && form.type === 'liquid' && form.mgPerMl) {
+        const ml = Math.round((res.doseMg / form.mgPerMl) * 10) / 10;
+        volumeText = `${ml} mL`;
+      } else if (res.eligible && form.type === 'tablet' && form.mgPerTab) {
+        const tabs = Math.round((res.doseMg / form.mgPerTab) * 100) / 100;
+        volumeText = `${tabs} tab/cap/vial`;
+      }
+
+      const ageBadge = ageMo >= 216 ? 'Adult (≥18 yrs)' : `Pediatric (${state.ageVal} ${state.ageUnit})`;
+
+      body.innerHTML = `
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5 mb-1">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-teal-100 text-teal-800">${drug.class}</span>
+              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-200 text-slate-700">${ageBadge} • ${wt} kg</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">${drug.name}</h3>
+          </div>
+          ${res.isCapped ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Capped at Max Dose</span>' : ''}
+        </div>
+
+        ${!res.eligible ? `
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start gap-2.5">
+            <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 mt-0.5 text-rose-600"></i>
+            <div>
+              <p class="font-semibold">Age / Weight Restriction</p>
+              <p class="text-xs mt-0.5">${res.alert}</p>
+            </div>
+          </div>
+        ` : `
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200">
+              <p class="text-[11px] font-medium text-slate-500 uppercase">Dose / Admin</p>
+              <p class="text-2xl font-bold text-teal-700 mt-0.5">${res.doseMg} mg</p>
+              ${volumeText ? `<p class="text-xs font-semibold text-slate-700 mt-0.5">= ${volumeText}</p>` : ''}
+            </div>
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200">
+              <p class="text-[11px] font-medium text-slate-500 uppercase">Frequency</p>
+              <p class="text-sm font-semibold text-slate-900 mt-1">${res.freq}</p>
+            </div>
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200">
+              <p class="text-[11px] font-medium text-slate-500 uppercase">Typical Duration</p>
+              <p class="text-sm font-semibold text-slate-900 mt-1">${res.duration}</p>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-600 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <span><strong>Formulation:</strong> ${form.label}</span>
+            <span><strong>Max Cap:</strong> ${res.maxCap || 'Standard'}</span>
+          </div>
+
+          ${res.alert ? `
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+              <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5 text-amber-600"></i>
+              <span>${res.alert}</span>
+            </div>
+          ` : ''}
+        `}
+      `;
+      lucide.createIcons();
+    }
+
+    function renderClassFilters() {
+      const classes = [
+        'All',
+        'Antihistamines',
+        'Antifungals',
+        'Antibiotics',
+        'Leprosy MDT & Mycobacterial',
+        'Antivirals & Antiparasitics',
+        'Corticosteroids',
+        'Immunomodulators & JAK/Biologics',
+        'Retinoids & Pigment'
+      ];
+      const container = document.getElementById('class-filters');
+      container.innerHTML = '';
+      classes.forEach(cls => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const active = state.tableFilterClass === cls;
+        btn.className = `px-3 py-1 rounded-full text-xs font-medium transition ${active ? 'bg-teal-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'}`;
+        btn.textContent = cls;
+        btn.addEventListener('click', () => {
+          state.tableFilterClass = cls;
+          renderClassFilters();
+          renderTable();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('dosing-table-body');
+      const q = state.tableSearch.trim().toLowerCase();
+      const rows = DRUGS.filter(d => {
+        const matchClass = state.tableFilterClass === 'All' || d.class === state.tableFilterClass;
+        const matchSearch = !q || d.name.toLowerCase().includes(q) || d.class.toLowerCase().includes(q) || d.doseSummary.toLowerCase().includes(q) || d.notesSummary.toLowerCase().includes(q) || d.indications.some(i => i.label.toLowerCase().includes(q));
+        return matchClass && matchSearch;
+      });
+
+      tbody.innerHTML = '';
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400 text-sm">No drugs match your filter.</td></tr>';
+        return;
+      }
+
+      rows.forEach(d => {
+        const tr = document.createElement('tr');
+        const isSelected = d.id === state.selectedDrugId;
+        tr.className = `cursor-pointer transition ${isSelected ? 'bg-teal-50/70' : 'hover:bg-slate-50'}`;
+        tr.innerHTML = `
+          <td class="py-3 px-4 align-top">
+            <div class="font-semibold text-slate-900">${d.name}</div>
+            <div class="text-[11px] text-slate-500">${d.class}</div>
+          </td>
+          <td class="py-3 px-4 align-top text-slate-700">${d.basisSummary}</td>
+          <td class="py-3 px-4 align-top text-slate-900 font-medium">${d.doseSummary}</td>
+          <td class="py-3 px-4 align-top text-slate-600">${d.notesSummary}</td>
+          <td class="py-3 px-4 align-top text-right no-print">
+            <a href="${d.sourceUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"
+              class="inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:underline">
+              <span>${d.sourceLabel}</span>
+            </a>
+          </td>
+        `;
+        tr.addEventListener('click', () => {
+          state.selectedDrugId = d.id;
+          state.formulationIdx = 0;
+          state.indicationId = d.indications[0].id;
+          document.getElementById('drug-search-input').value = '';
+          populateDrugSelect('');
+          populateFormulationAndIndication();
+          renderResultCard();
+          renderTable();
+          document.getElementById('calculator-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderRxTray() {
+      document.getElementById('rx-count-badge').textContent = state.rxTray.length;
+      const container = document.getElementById('rx-tray-items');
+      const printList = document.getElementById('print-rx-list');
+      const printMeta = document.getElementById('print-patient-meta');
+      printMeta.textContent = `Age: ${state.ageVal} ${state.ageUnit} | Weight: ${state.weightKg} kg`;
+
+      if (state.rxTray.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-slate-400 text-xs">No drugs added yet. Calculate a dose and click "Add to Rx Tray".</div>';
+        printList.innerHTML = '<p class="text-xs text-slate-500">No items in Rx tray.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      printList.innerHTML = '';
+      state.rxTray.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between gap-2';
+        card.innerHTML = `
+          <div>
+            <p class="text-sm font-semibold text-slate-900">${item.drugName} — ${item.doseText}</p>
+            <p class="text-xs text-slate-600 mt-0.5">${item.freq} • ${item.duration}</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">${item.formulation} (${item.ageWeight})</p>
+          </div>
+          <button type="button" data-idx="${idx}" class="btn-remove-rx p-1 text-slate-400 hover:text-rose-600">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+        container.appendChild(card);
+
+        const pRow = document.createElement('div');
+        pRow.className = 'border-b border-slate-200 pb-1.5';
+        pRow.textContent = `${idx + 1}. ${item.drugName}: ${item.doseText} — ${item.freq} (${item.duration}) [${item.formulation}]`;
+        printList.appendChild(pRow);
+      });
+
+      container.querySelectorAll('.btn-remove-rx').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.getAttribute('data-idx'), 10);
+          state.rxTray.splice(i, 1);
+          saveTray();
+          renderRxTray();
+        });
+      });
+      lucide.createIcons();
+    }
+
+    function openDrawer(open) {
+      const drawer = document.getElementById('rx-drawer');
+      const backdrop = document.getElementById('rx-drawer-backdrop');
+      if (open) {
+        backdrop.classList.remove('hidden');
+        drawer.classList.remove('translate-x-full');
+      } else {
+        backdrop.classList.add('hidden');
+        drawer.classList.add('translate-x-full');
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('drug-search-input').addEventListener('input', (e) => {
+      populateDrugSelect(e.target.value);
+      populateFormulationAndIndication();
+      renderResultCard();
+      renderTable();
+    });
+
+    document.getElementById('drug-select').addEventListener('change', (e) => {
+      state.selectedDrugId = e.target.value;
+      state.formulationIdx = 0;
+      state.indicationId = getSelectedDrug().indications[0].id;
+      populateFormulationAndIndication();
+      renderResultCard();
+      renderTable();
+    });
+
+    document.getElementById('age-input').addEventListener('input', (e) => {
+      state.ageVal = e.target.value;
+      updateWeightFromAgeIfAuto();
+      renderResultCard();
+    });
+
+    document.getElementById('age-unit').addEventListener('change', (e) => {
+      state.ageUnit = e.target.value;
+      updateWeightFromAgeIfAuto();
+      renderResultCard();
+    });
+
+    document.querySelectorAll('.age-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.ageVal = btn.getAttribute('data-val');
+        state.ageUnit = btn.getAttribute('data-unit');
+        state.autoWeight = true;
+        document.getElementById('age-input').value = state.ageVal;
+        document.getElementById('age-unit').value = state.ageUnit;
+        document.getElementById('auto-weight-toggle').checked = true;
+        updateWeightFromAgeIfAuto();
+        renderResultCard();
+      });
+    });
+
+    document.getElementById('auto-weight-toggle').addEventListener('change', (e) => {
+      state.autoWeight = e.target.checked;
+      updateWeightFromAgeIfAuto();
+      renderResultCard();
+    });
+
+    document.getElementById('weight-input').addEventListener('input', (e) => {
+      state.autoWeight = false;
+      document.getElementById('auto-weight-toggle').checked = false;
+      state.weightKg = e.target.value;
+      document.getElementById('weight-source-note').textContent = 'Using manually entered patient weight';
+      renderResultCard();
+    });
+
+    document.getElementById('formulation-select').addEventListener('change', (e) => {
+      state.formulationIdx = parseInt(e.target.value, 10) || 0;
+      renderResultCard();
+    });
+
+    document.getElementById('indication-select').addEventListener('change', (e) => {
+      state.indicationId = e.target.value;
+      renderResultCard();
+    });
+
+    document.getElementById('table-search').addEventListener('input', (e) => {
+      state.tableSearch = e.target.value;
+      renderTable();
+    });
+
+    document.getElementById('btn-copy-dose').addEventListener('click', () => {
+      const drug = getSelectedDrug();
+      const form = drug.formulations[state.formulationIdx] || drug.formulations[0];
+      const res = drug.calc(getAgeMonths(), parseFloat(state.weightKg) || 0, state.indicationId);
+      if (!res.eligible) { showToast('Drug not eligible for entered age/weight'); return; }
+      let vol = '';
+      if (form.type === 'liquid' && form.mgPerMl) vol = ` (${Math.round((res.doseMg / form.mgPerMl) * 10) / 10} mL)`;
+      copyText(`${drug.name}: ${res.doseMg} mg${vol} — ${res.freq} for ${res.duration} [${form.label}]`);
+    });
+
+    document.getElementById('btn-add-rx').addEventListener('click', () => {
+      const drug = getSelectedDrug();
+      const form = drug.formulations[state.formulationIdx] || drug.formulations[0];
+      const res = drug.calc(getAgeMonths(), parseFloat(state.weightKg) || 0, state.indicationId);
+      if (!res.eligible) { showToast('Cannot add restricted dose to Rx Tray'); return; }
+      let vol = '';
+      if (form.type === 'liquid' && form.mgPerMl) vol = ` (${Math.round((res.doseMg / form.mgPerMl) * 10) / 10} mL)`;
+      state.rxTray.push({
+        drugName: drug.name,
+        doseText: `${res.doseMg} mg${vol}`,
+        freq: res.freq,
+        duration: res.duration,
+        formulation: form.label,
+        ageWeight: `${state.ageVal} ${state.ageUnit}, ${state.weightKg} kg`
+      });
+      saveTray();
+      renderRxTray();
+      showToast(`Added ${drug.name} to Rx Tray`);
+    });
+
+    document.getElementById('btn-rx-drawer').addEventListener('click', () => openDrawer(true));
+    document.getElementById('btn-close-drawer').addEventListener('click', () => openDrawer(false));
+    document.getElementById('rx-drawer-backdrop').addEventListener('click', () => openDrawer(false));
+    document.getElementById('btn-clear-rx').addEventListener('click', () => {
+      state.rxTray = [];
+      saveTray();
+      renderRxTray();
+      showToast('Rx Tray cleared');
+    });
+    document.getElementById('btn-copy-rx').addEventListener('click', () => {
+      if (state.rxTray.length === 0) { showToast('Rx Tray is empty'); return; }
+      const text = state.rxTray.map((it, i) => `${i + 1}. ${it.drugName}: ${it.doseText} — ${it.freq} (${it.duration})`).join('\n');
+      copyText(text);
+    });
+    document.getElementById('btn-print-page').addEventListener('click', () => window.print());
+    document.getElementById('btn-print-rx').addEventListener('click', () => window.print());
+
+    // Init
+    populateDrugSelect('');
+    populateFormulationAndIndication();
+    updateWeightFromAgeIfAuto();
+    renderResultCard();
+    renderClassFilters();
+    renderTable();
+    renderRxTray();
+  </script>
+</body>
+</html>
